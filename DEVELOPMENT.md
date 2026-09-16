@@ -23,7 +23,7 @@ Keep this record current after each cohesive change. Preserve existing player da
 
 Repeatable checks: `npm ci --ignore-scripts`, then `npm test` (all Lua suites in tests/), then `npm run build`. The dependency lockfile pins the pure-JavaScript Lua test runtime. No Xcode/native compilation is required for these mocked tests.
 
-Guardian strikes, nearby assist payouts, route caches, salvage crates, storm cores and ancient caches now use a shared living-character/range check before awarding rewards or consuming loot. Storm cores also reject collection after the event deadline. `tests/player-runtime.lua` covers exact range boundaries, out-of-range, dead/missing characters and destroyed targets with mocks. Harbor interactions still need the same server-side eligibility audit.
+Guardian strikes, nearby assist payouts, route caches, salvage crates, storm cores and ancient caches now use a shared living-character/range check before awarding rewards or consuming loot. Storm cores also reject collection after the event deadline. `tests/player-runtime.lua` covers exact range boundaries, out-of-range, dead/missing characters and destroyed targets with mocks. Harbor upgrades, sanctuary, training, daily log, contract review and guest rewards now also require loaded player data and a living character within reach. Existing owner checks remain in place. Teleport/navigation interactions remain to audit.
 
 Character selection now allows a manual retry after eight seconds without confirmation. Delayed callbacks are attempt-scoped; successful confirmation closes the panel, and the server acknowledges an existing choice without allowing replacement. Buttons use Activated for mouse/touch/gamepad. Pending Studio latency/input tests.
 

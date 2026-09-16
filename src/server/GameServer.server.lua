@@ -1517,6 +1517,7 @@ local function buildPlot(world, index)
     addBillboard(terminal, "HARBOR UPLINK", Theme.Aqua)
     local prompt = addPrompt(terminal, "Upgrade", "Harbor Uplink", 0.5)
     prompt.Triggered:Connect(function(player)
+        if not playerData[player] or not PlayerRuntime.canInteract(player, terminal, prompt.MaxActivationDistance) then return end
         if plot:GetAttribute("OwnerId") ~= player.UserId then
             sendStatus(player, "This harbor belongs to another salvager.", "Warning")
             return
@@ -1639,6 +1640,7 @@ local function buildPlot(world, index)
     sanctuaryGlow.Parent = sanctuary
     local sanctuaryPrompt = addPrompt(sanctuary, "Welcome", "Skyling Sanctuary", 0.4)
     sanctuaryPrompt.Triggered:Connect(function(player)
+        if not playerData[player] or not PlayerRuntime.canInteract(player, sanctuary, sanctuaryPrompt.MaxActivationDistance) then return end
         if plot:GetAttribute("OwnerId") ~= player.UserId then
             sendStatus(player, "Only the harbor captain may use this sanctuary.", "Warning")
             return
@@ -1678,6 +1680,7 @@ local function buildPlot(world, index)
     trainingGlow.Parent = trainingTable
     local trainingPrompt = addPrompt(trainingTable, "Train", "Crew Training", 0.5)
     trainingPrompt.Triggered:Connect(function(player)
+        if not playerData[player] or not PlayerRuntime.canInteract(player, trainingTable, trainingPrompt.MaxActivationDistance) then return end
         if plot:GetAttribute("OwnerId") ~= player.UserId then
             sendStatus(player, "Only the harbor captain can train their crew mate.", "Warning")
             return
@@ -1721,6 +1724,7 @@ local function buildPlot(world, index)
     logGlow.Parent = captainLog
     local logPrompt = addPrompt(captainLog, "Claim", "Captain's Log", 0.4)
     logPrompt.Triggered:Connect(function(player)
+        if not playerData[player] or not PlayerRuntime.canInteract(player, captainLog, logPrompt.MaxActivationDistance) then return end
         if plot:GetAttribute("OwnerId") ~= player.UserId then
             sendStatus(player, "Only the harbor captain may claim this log.", "Warning")
             return
@@ -1751,6 +1755,7 @@ local function buildPlot(world, index)
     addBillboard(contractLedger, "CAPTAIN'S CONTRACT\n0 / " .. Config.ContractGoal .. " CRATES", Theme.Mint:Lerp(Theme.Text, 0.35))
     local contractPrompt = addPrompt(contractLedger, "Review", "Captain's Contract", 0.2)
     contractPrompt.Triggered:Connect(function(player)
+        if not playerData[player] or not PlayerRuntime.canInteract(player, contractLedger, contractPrompt.MaxActivationDistance) then return end
         if plot:GetAttribute("OwnerId") ~= player.UserId then
             sendStatus(player, "This contract belongs to another harbor captain.", "Warning")
             return
@@ -1770,6 +1775,7 @@ local function buildPlot(world, index)
     addBillboard(guestBook, "GUEST LOG\n0 VISITS", Theme.Gold:Lerp(Theme.Text, 0.35))
     local guestPrompt = addPrompt(guestBook, "Sign", "Harbor Guest Log", 0.4)
     guestPrompt.Triggered:Connect(function(player)
+        if not playerData[player] or not PlayerRuntime.canInteract(player, guestBook, guestPrompt.MaxActivationDistance) then return end
         local ownerId = plot:GetAttribute("OwnerId")
         if not ownerId or ownerId == player.UserId then
             sendStatus(player, "Invite another salvager to sign your guest log.", "Info")
