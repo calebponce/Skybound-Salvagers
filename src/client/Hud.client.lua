@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("SkyboundRemotes")
@@ -382,19 +383,19 @@ local function setDrawerOpen(isOpen)
     chainChip.Visible = not isOpen and (remotes:GetAttribute("StormActive") or (player:GetAttribute("DiscoveryChain") or 0) >= 2)
 end
 
-journeyButton.MouseButton1Click:Connect(function()
+journeyButton.Activated:Connect(function()
     setDrawerOpen(not drawer.Visible)
 end)
-closeButton.MouseButton1Click:Connect(function()
+closeButton.Activated:Connect(function()
     setDrawerOpen(false)
 end)
 
-homeButton.MouseButton1Click:Connect(function()
+homeButton.Activated:Connect(function()
     returnHomeEvent:FireServer()
     setDrawerOpen(false)
 end)
 
-objectiveAction.MouseButton1Click:Connect(function()
+objectiveAction.Activated:Connect(function()
     returnHomeEvent:FireServer()
     setDrawerOpen(false)
 end)
@@ -469,7 +470,7 @@ local function guideText(value, y, height, font, textSize, color)
 end
 
 guideText("ISLAND GUIDE", 18, 25, Enum.Font.GothamBlack, 19, Theme.Text)
-guideText("A quick map of Skybound Salvagers", 43, 18, Enum.Font.GothamMedium, 11, Theme.Muted)
+guideText("Keyboard: G for guide, J for Journey. Controller: B to close a panel.", 43, 18, Enum.Font.GothamMedium, 11, Theme.Muted)
 guideText("SALVAGE, RANK & DANGER  •  Recover crates for salvage and Explorer XP. Guardians hit harder in later skies, but their prizes rise too.", 82, 32, Enum.Font.GothamMedium, 11, Theme.Text)
 guideText("CONTRACTS  •  Every 8 regular crates completes a contract and earns a rescue beacon.", 124, 32, Enum.Font.GothamMedium, 11, Theme.Text)
 guideText("SANCTUARY  •  At your harbor, spend rescue beacons to welcome Skylings. Every 2 adds bonus salvage, up to +3.", 166, 40, Enum.Font.GothamMedium, 11, Theme.Text)
@@ -592,7 +593,7 @@ local function setMapOpen(isOpen)
     mapButton.Text = isOpen and "GUIDE" or "SKY MAP"
 end
 
-mapButton.MouseButton1Click:Connect(function()
+mapButton.Activated:Connect(function()
     setMapOpen(not mapOpen)
 end)
 
@@ -616,14 +617,32 @@ local function setGuideOpen(isOpen)
     if isOpen then setMapOpen(false) end
 end
 
-guideButton.MouseButton1Click:Connect(function()
+guideButton.Activated:Connect(function()
     setGuideOpen(true)
 end)
-guideClose.MouseButton1Click:Connect(function()
+guideClose.Activated:Connect(function()
     setGuideOpen(false)
 end)
 guideEvent.OnClientEvent:Connect(function()
     setGuideOpen(true)
+end)
+
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed or UserInputService:GetFocusedTextBox() then return end
+    if not Config.crewMateById(player:GetAttribute("CrewMate")) then return end
+    if input.KeyCode == Enum.KeyCode.G then
+        setGuideOpen(not guideOverlay.Visible)
+        if guideOverlay.Visible then setDrawerOpen(false) end
+    elseif input.KeyCode == Enum.KeyCode.J then
+        if guideOverlay.Visible then return end
+        setDrawerOpen(not drawer.Visible)
+    elseif input.KeyCode == Enum.KeyCode.ButtonB then
+        if guideOverlay.Visible then
+            setGuideOpen(false)
+        elseif drawer.Visible then
+            setDrawerOpen(false)
+        end
+    end
 end)
 
 -- A first-join card keeps the premise and the initial choice in one short,

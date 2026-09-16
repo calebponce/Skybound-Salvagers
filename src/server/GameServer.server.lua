@@ -16,6 +16,7 @@ local createPart = WorldPrimitives.createPart
 local addBillboard = WorldPrimitives.addBillboard
 local addPrompt = WorldPrimitives.addPrompt
 local CrewExpedition = require(script.Parent:WaitForChild("CrewExpedition"))
+local GuardianAttack = require(script.Parent:WaitForChild("GuardianAttack"))
 local ProgressData = require(script.Parent:WaitForChild("ProgressData"))
 -- DataStores are unavailable in an unpublished local place. Keep the prototype
 -- immediately playable in Studio and enable persistence automatically after publish.
@@ -1554,6 +1555,7 @@ local function buildPlot(world, index)
     addBillboard(navigator, "WRECK NAVIGATOR\nBEGIN YOUR FIRST CONTRACT", Theme.Gold:Lerp(Theme.Text, 0.35))
     local navigatorPrompt = addPrompt(navigator, "Travel", "Whispering Wreck", 0.25)
     navigatorPrompt.Triggered:Connect(function(player)
+        if not playerData[player] or not PlayerRuntime.canInteract(player, navigator, navigatorPrompt.MaxActivationDistance) then return end
         if plot:GetAttribute("OwnerId") ~= player.UserId then
             sendStatus(player, "Only the harbor captain may use this navigator.", "Warning")
             return
@@ -1614,6 +1616,7 @@ local function buildPlot(world, index)
         routeLight.Parent = route
         local routePrompt = addPrompt(route, "Travel", biome.Name, 0.35)
         routePrompt.Triggered:Connect(function(player)
+            if not playerData[player] or not PlayerRuntime.canInteract(player, route, routePrompt.MaxActivationDistance) then return end
             if plot:GetAttribute("OwnerId") ~= player.UserId then
                 sendStatus(player, "Only the harbor captain may use this route.", "Warning")
                 return
@@ -1801,8 +1804,7 @@ end
 local function returnToHarbor(player)
     local plot = playerPlots[player]
     if plot and plot:GetAttribute("OwnerId") == player.UserId then
-        teleportPlayer(player, plot:GetAttribute("Center") + Vector3.new(0, 7, 0))
-        return true
+        return teleportPlayer(player, plot:GetAttribute("Center") + Vector3.new(0, 7, 0))
     end
     sendStatus(player, "You do not have an assigned harbor in this server.", "Warning")
     return false
@@ -1811,7 +1813,7 @@ end
 local function rescueFromSkyfall(player)
     local plot = playerPlots[player]
     local destination = plot and plot:GetAttribute("Center") + Vector3.new(0, 8, 0) or Vector3.new(0, 35, -12)
-    teleportPlayer(player, destination)
+    if not teleportPlayer(player, destination) then return end
     sendStatus(player, "Skyway rescue line engaged—back on solid ground.", "Info")
 end
 
@@ -1824,7 +1826,7 @@ travelToBiome = function(player, biomeIndex)
         sendStatus(player, biome.Name .. " unlocks at Harbor Level " .. biome.RequiredHarborLevel .. ".", "Warning")
         return
     end
-    teleportPlayer(player, destination + Vector3.new(0, 8, -10))
+    if not teleportPlayer(player, destination + Vector3.new(0, 8, -10)) then return end
     sendStatus(player, "Welcome to " .. biome.Name .. ". Salvage is more valuable here!", "Info")
 end
 
@@ -1880,9 +1882,7 @@ local function createBiomeGuardian(parent, position, biome)
     local strike = addPrompt(body, "Strike", biome.GuardianName, 0.35)
     local health = biome.GuardianHealth
     local alive = true
-    local windingUp = false
-    local interrupted = false
-    local lastInterruptAt = -math.huge
+    local attack = GuardianAttack.new()
     local attackWarning
     local lastStrikeByPlayer = {}
     strike.Triggered:Connect(function(player)
@@ -1899,12 +1899,8 @@ local function createBiomeGuardian(parent, position, biome)
             if body.Parent and alive then body.Color = bodyColor end
         end)
         if health > 0 then
-            local interruptedNow = windingUp and not interrupted and mate
-                and mate.GuardianInterruptCooldown
-                and now - lastInterruptAt >= mate.GuardianInterruptCooldown
+            local interruptedNow = attack:Interrupt(now, mate and mate.GuardianInterruptCooldown)
             if interruptedNow then
-                interrupted = true
-                lastInterruptAt = now
                 if attackWarning then attackWarning.Transparency = 1 end
                 eye.Color = Theme.Aqua
             end
@@ -1962,8 +1958,7 @@ local function createBiomeGuardian(parent, position, biome)
         while alive and guardian.Parent do
             local targets = targetsInRange()
             if #targets > 0 then
-                windingUp = true
-                interrupted = false
+                attack:Begin()
                 -- One shared wind-up: the visible sphere is the exact damage radius.
                 warning.Transparency = 0.82
                 eye.Size = Vector3.new(2.1, 2.1, 2.1)
@@ -1973,9 +1968,9 @@ local function createBiomeGuardian(parent, position, biome)
                 end
                 task.wait(0.9)
                 if not alive or not guardian.Parent then break end
-                windingUp = false
+                local canDamage = attack:Resolve()
                 -- Re-evaluate at impact: escaping or defeating it cancels damage.
-                for _, target in ipairs(interrupted and {} or targetsInRange()) do
+                for _, target in ipairs(canDamage and targetsInRange() or {}) do
                     local mate = crewMateFor(target.Player)
                     local multiplier = mate and mate.GuardianDamageMultiplier or 1
                     local damage = math.max(1, math.floor(biome.GuardianDamage * multiplier + 0.5))
@@ -2182,6 +2177,11 @@ local function buildWorld()
     addBillboard(crewBoard, "CREW EXPEDITION\n1–4 PLAYERS • +" .. Config.CrewReward .. " SALVAGE EACH", Theme.Aqua:Lerp(Theme.Text, 0.35))
     local crewPrompt = addPrompt(crewBoard, "Join / Leave", "Crew Expedition", 0.4)
     crewPrompt.Triggered:Connect(function(player)
+        if not playerData[player] or not PlayerRuntime.canInteract(player, crewBoard, crewPrompt.MaxActivationDistance) then return end
+        if playerData[player].CrewMate == "" then
+            sendStatus(player, "Choose your crew mate before joining an expedition.", "Info")
+            return
+        end
         local joined, warning = crew:ToggleMembership(player)
         if warning then
             sendStatus(player, warning, "Warning")
@@ -2200,9 +2200,14 @@ local function buildWorld()
     addBillboard(directory, "HARBOR DIRECTORY", Theme.Mint:Lerp(Theme.Text, 0.35))
     local directoryPrompt = addPrompt(directory, "Visit", "Another Salvager", 0.35)
     directoryPrompt.Triggered:Connect(function(player)
+        if not playerData[player] or not PlayerRuntime.canInteract(player, directory, directoryPrompt.MaxActivationDistance) then return end
         local candidates = {}
         for _, candidate in ipairs(Players:GetPlayers()) do
-            if candidate ~= player and playerData[candidate] then table.insert(candidates, candidate) end
+            local candidatePlot = playerPlots[candidate]
+            if candidate ~= player and playerData[candidate] and candidatePlot
+                and candidatePlot:GetAttribute("OwnerId") == candidate.UserId then
+                table.insert(candidates, candidate)
+            end
         end
         if #candidates == 0 then
             sendStatus(player, "No other harbors are online. Invite a friend to visit!", "Info")
@@ -2214,7 +2219,7 @@ local function buildWorld()
         local host = candidates[nextIndex]
         for _, plot in ipairs(plots) do
             if plot:GetAttribute("OwnerId") == host.UserId then
-                teleportPlayer(player, plot:GetAttribute("Center") + Vector3.new(0, 7, -5))
+                if not teleportPlayer(player, plot:GetAttribute("Center") + Vector3.new(0, 7, -5)) then return end
                 sendStatus(player, "Visiting " .. host.DisplayName .. "'s sky harbor. Sign their guest log!", "Info")
                 return
             end
@@ -2236,6 +2241,7 @@ local function buildWorld()
         local gatePrompt = addPrompt(gate, "Chart Route", biome.Name, 0.35)
         gatePrompt.MaxActivationDistance = 16
         gatePrompt.Triggered:Connect(function(player)
+            if not PlayerRuntime.canInteract(player, gate, gatePrompt.MaxActivationDistance) then return end
             travelToBiome(player, gateBiomeIndex)
         end)
         buildBiome(world, biome, biomePositions[index])

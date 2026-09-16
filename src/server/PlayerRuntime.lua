@@ -24,12 +24,15 @@ return function(statusEvent)
     function Runtime.teleportPlayer(player, destination)
         local character = player.Character
         local root = character and character:FindFirstChild("HumanoidRootPart")
-        if root then
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        if root and humanoid and humanoid.Health > 0 then
             root.CFrame = CFrame.new(destination)
             root.AssemblyLinearVelocity = Vector3.zero
             root.AssemblyAngularVelocity = Vector3.zero
+            return true
         else
             Runtime.sendStatus(player, "Your airship navigator is recalibrating. Try again in a moment.", "Warning")
+            return false
         end
     end
 
