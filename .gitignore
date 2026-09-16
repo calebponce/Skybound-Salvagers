@@ -1,0 +1,11 @@
+# Roblox Studio / Rojo generated files
+*.rbxl
+*.rbxlx
+*.rbxl.lock
+*.rbxm
+*.rbxmx
+*.log
+
+# Local tooling
+.DS_Store
+node_modules/

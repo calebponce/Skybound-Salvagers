@@ -1,0 +1,20 @@
+-- Shared visual tokens. Keep all game-facing colors in one small module.
+return {
+    Sky = Color3.fromRGB(126, 205, 235),
+    SkyHaze = Color3.fromRGB(211, 242, 249),
+    Cloud = Color3.fromRGB(239, 249, 252),
+    Harbor = Color3.fromRGB(75, 142, 111),
+    HarborDark = Color3.fromRGB(37, 78, 74),
+    Slate = Color3.fromRGB(71, 83, 98),
+    Ink = Color3.fromRGB(15, 29, 48),
+    Panel = Color3.fromRGB(20, 39, 61),
+    PanelRaised = Color3.fromRGB(29, 54, 78),
+    Border = Color3.fromRGB(93, 160, 181),
+    Text = Color3.fromRGB(239, 248, 252),
+    Muted = Color3.fromRGB(169, 194, 210),
+    Aqua = Color3.fromRGB(88, 220, 217),
+    Gold = Color3.fromRGB(255, 201, 101),
+    Mint = Color3.fromRGB(122, 231, 173),
+    Violet = Color3.fromRGB(188, 133, 255),
+    Coral = Color3.fromRGB(255, 143, 121),
+}

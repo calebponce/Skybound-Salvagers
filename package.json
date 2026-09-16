@@ -1,0 +1,12 @@
+{
+  "name": "skybound-salvagers-checks",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "build": "rojo build default.project.json -o SkyboundSalvagers.rbxl"
+  },
+  "devDependencies": {
+    "fengari": "0.1.5"
+  }
+}
